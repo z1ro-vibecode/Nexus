@@ -1,0 +1,3308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus — Messenger</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
+    <style>
+        /* ===== CSS VARIABLES / THEMES ===== */
+        :root {
+            --bg-primary: #e8edf5;
+            --bg-secondary: #d5dce8;
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.45);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --text-primary: #1a1a2e;
+            --text-secondary: #3a3a5a;
+            --text-muted: #6a6a8a;
+            --accent: #5865f2;
+            --accent-hover: #4752c4;
+            --accent-light: rgba(88, 101, 242, 0.15);
+            --card-bg: rgba(255, 255, 255, 0.5);
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(255, 255, 255, 0.3);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --sidebar-width: 72px;
+            --header-height: 64px;
+            --blur-amount: 16px;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --glass-bg: rgba(30, 30, 50, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.10);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --text-primary: #e8e8f0;
+            --text-secondary: #b0b0c8;
+            --text-muted: #7a7a9a;
+            --card-bg: rgba(30, 30, 50, 0.6);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.08);
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===== RESET & BASE ===== */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            transition: background var(--transition), color var(--transition);
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(88, 101, 242, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(88, 101, 242, 0.04) 0%, transparent 50%);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* ===== APP LAYOUT ===== */
+        #app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ===== SIDEBAR ===== */
+        #sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount));
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0 20px;
+            gap: 8px;
+            z-index: 10;
+            transition: background var(--transition), border var(--transition);
+            box-shadow: 2px 0 20px var(--shadow-color);
+            overflow-y: auto;
+        }
+
+        #sidebar .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+        #sidebar .logo i {
+            font-size: 26px;
+        }
+        #sidebar .logo span {
+            display: none;
+        }
+
+        .nav-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .nav-btn:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+            transform: scale(1.05);
+        }
+        .nav-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(88, 101, 242, 0.3);
+        }
+        .nav-btn .badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #ed4245;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-divider {
+            width: 32px;
+            height: 2px;
+            background: var(--glass-border);
+            border-radius: 2px;
+            margin: 4px 0;
+        }
+
+        #sidebar .user-badge {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 0;
+        }
+        #sidebar .user-badge .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent);
+            border: 2px solid var(--glass-border);
+            cursor: pointer;
+            transition: all var(--transition);
+            overflow: hidden;
+            position: relative;
+        }
+        #sidebar .user-badge .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #sidebar .user-badge .avatar:hover {
+            transform: scale(1.05);
+            border-color: var(--accent);
+        }
+        #sidebar .user-badge .username {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        #main {
+            flex: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-primary);
+            transition: background var(--transition);
+        }
+
+        /* ===== HEADER ===== */
+        #header {
+            height: var(--header-height);
+            min-height: var(--header-height);
+            padding: 0 28px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount));
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background var(--transition), border var(--transition);
+            z-index: 5;
+        }
+
+        #header .left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        #header .left h2 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            color: var(--text-primary);
+        }
+        #header .left .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        #header .right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        #header .right .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: var(--radius-sm);
+            padding: 6px 14px;
+            gap: 8px;
+            transition: all var(--transition);
+            backdrop-filter: blur(4px);
+        }
+        #header .right .search-box:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        #header .right .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: var(--font);
+            width: 160px;
+        }
+        #header .right .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+        #header .right .search-box i {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .header-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            border: 1px solid var(--input-border);
+        }
+        .header-btn:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        /* ===== VIEW CONTAINER ===== */
+        #view-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px 32px;
+            transition: all var(--transition);
+        }
+
+        .view {
+            display: none;
+            animation: fadeUp 0.35s ease forwards;
+        }
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== GLASS CARDS ===== */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--blur-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: var(--glass-shadow);
+            transition: all var(--transition);
+        }
+        .glass-card:hover {
+            box-shadow: 0 12px 40px var(--shadow-color);
+        }
+
+        /* ===== CHANNEL LIST ===== */
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+            margin-top: 16px;
+        }
+
+        .channel-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all var(--transition);
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .channel-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px var(--shadow-color);
+            border-color: var(--accent);
+        }
+        .channel-card .channel-name {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .channel-card .channel-name i {
+            color: var(--accent);
+            font-size: 18px;
+        }
+        .channel-card .channel-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 16px;
+            margin-top: 6px;
+        }
+        .channel-card .channel-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .channel-card .channel-owner {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .channel-card .sub-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--accent);
+            color: #fff;
+        }
+        .channel-card .sub-btn.subscribed {
+            background: var(--input-bg);
+            color: var(--text-secondary);
+        }
+        .channel-card .sub-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* ===== POSTS ===== */
+        .post {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            transition: all var(--transition);
+        }
+        .post:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+        .post .post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .post .post-header .post-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--accent);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .post .post-header .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .post .post-header .post-author {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .post .post-header .post-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+        .post .post-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            padding: 4px 0 8px;
+            word-wrap: break-word;
+        }
+        .post .post-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .post .post-actions button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--transition);
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-family: var(--font);
+        }
+        .post .post-actions button:hover {
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+        .post .post-actions button.liked {
+            color: #ed4245;
+        }
+        .post .post-actions button.liked i {
+            font-weight: 900;
+        }
+        .post .post-comments {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .post .post-comments .comment {
+            display: flex;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 14px;
+            align-items: flex-start;
+        }
+        .post .post-comments .comment .c-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .post .post-comments .comment .c-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .post .post-comments .comment .c-body {
+            flex: 1;
+        }
+        .post .post-comments .comment .c-body .c-author {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .post .post-comments .comment .c-body .c-text {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .post .post-comments .comment-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .post .post-comments .comment-input input {
+            flex: 1;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 13px;
+            outline: none;
+            transition: all var(--transition);
+        }
+        .post .post-comments .comment-input input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        .post .post-comments .comment-input button {
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+        }
+        .post .post-comments .comment-input button:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        /* ===== DMs ===== */
+        .dm-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .dm-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--card-bg);
+            border: 1px solid transparent;
+        }
+        .dm-item:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+        }
+        .dm-item .dm-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--accent);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .dm-item .dm-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .dm-item .dm-name {
+            font-weight: 500;
+        }
+        .dm-item .dm-last {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .dm-chat {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .dm-chat .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .dm-chat .messages .msg {
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            max-width: 75%;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .dm-chat .messages .msg.self {
+            align-self: flex-end;
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .dm-chat .messages .msg .msg-time {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 4px;
+            display: block;
+        }
+        .dm-chat .dm-input {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-top: 1px solid var(--glass-border);
+        }
+        .dm-chat .dm-input input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 14px;
+            outline: none;
+            transition: all var(--transition);
+        }
+        .dm-chat .dm-input input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        .dm-chat .dm-input button {
+            padding: 10px 22px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+        }
+        .dm-chat .dm-input button:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ===== PROFILE ===== */
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            padding: 12px 0;
+        }
+        .profile-header .big-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--accent);
+            border: 3px solid var(--glass-border);
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .profile-header .big-avatar:hover {
+            border-color: var(--accent);
+            transform: scale(1.02);
+        }
+        .profile-header .big-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-header .big-avatar .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all var(--transition);
+            color: #fff;
+            font-size: 22px;
+            border-radius: 50%;
+        }
+        .profile-header .big-avatar:hover .overlay {
+            opacity: 1;
+        }
+        .profile-header .profile-info h2 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .profile-header .profile-info p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .profile-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .profile-actions button {
+            padding: 8px 20px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--input-border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .profile-actions button:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .profile-actions button.primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .profile-actions button.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ===== SETTINGS ===== */
+        .settings-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--glass-border);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+        .setting-row .label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .setting-row .label i {
+            color: var(--accent);
+            width: 20px;
+        }
+        .setting-row .control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .setting-row .control select,
+        .setting-row .control input[type="color"] {
+            padding: 6px 12px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .setting-row .control select:focus,
+        .setting-row .control input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        .setting-row .control input[type="color"] {
+            width: 44px;
+            height: 44px;
+            padding: 2px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .theme-toggle {
+            width: 52px;
+            height: 28px;
+            border-radius: 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            cursor: pointer;
+            position: relative;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .theme-toggle .thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent);
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all var(--transition);
+        }
+        .theme-toggle.dark .thumb {
+            left: 26px;
+            background: #fff;
+        }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            animation: fadeIn 0.25s ease;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 32px 36px;
+            max-width: 440px;
+            width: 92%;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .modal h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .modal .sub {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .modal label {
+            font-weight: 500;
+            font-size: 13px;
+            display: block;
+            margin-bottom: 4px;
+            margin-top: 14px;
+        }
+        .modal input,
+        .modal select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 14px;
+            outline: none;
+            transition: all var(--transition);
+        }
+        .modal input:focus,
+        .modal select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        .modal .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 22px;
+            flex-wrap: wrap;
+        }
+        .modal .btn-row button {
+            padding: 10px 24px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+            flex: 1;
+            min-width: 100px;
+        }
+        .modal .btn-row .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .modal .btn-row .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+        .modal .btn-row .btn-secondary {
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--input-border);
+        }
+        .modal .btn-row .btn-secondary:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .modal .btn-row .btn-danger {
+            background: #ed4245;
+            color: #fff;
+        }
+        .modal .btn-row .btn-danger:hover {
+            background: #c03538;
+        }
+        .modal .error {
+            color: #ed4245;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+        .modal .error.show {
+            display: block;
+        }
+        .modal .success {
+            color: #3ba55d;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+        .modal .success.show {
+            display: block;
+        }
+
+        /* ===== EMPTY STATES ===== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 48px;
+            color: var(--text-muted);
+            opacity: 0.3;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ===== BACKGROUND PRESETS ===== */
+        .bg-presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .bg-presets .bg-option {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--glass-border);
+            cursor: pointer;
+            transition: all var(--transition);
+            overflow: hidden;
+        }
+        .bg-presets .bg-option:hover {
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+        .bg-presets .bg-option.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 820px) {
+            #sidebar {
+                width: 60px;
+                min-width: 60px;
+                padding: 12px 0;
+            }
+            #sidebar .logo i {
+                font-size: 22px;
+            }
+            .nav-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 17px;
+            }
+            #header {
+                padding: 0 16px;
+            }
+            #header .left h2 {
+                font-size: 16px;
+            }
+            #header .right .search-box input {
+                width: 100px;
+            }
+            #view-container {
+                padding: 16px;
+            }
+            .channel-grid {
+                grid-template-columns: 1fr;
+            }
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .modal {
+                padding: 24px;
+                margin: 12px;
+            }
+            .dm-chat .messages .msg {
+                max-width: 88%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #sidebar {
+                width: 52px;
+                min-width: 52px;
+                padding: 10px 0;
+            }
+            .nav-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 15px;
+                border-radius: var(--radius-xs);
+            }
+            #sidebar .user-badge .avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            #sidebar .user-badge .username {
+                font-size: 9px;
+                max-width: 44px;
+            }
+            #header .left h2 {
+                font-size: 14px;
+            }
+            #header .right .search-box {
+                padding: 4px 10px;
+            }
+            #header .right .search-box input {
+                width: 70px;
+                font-size: 12px;
+            }
+            .header-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            #view-container {
+                padding: 12px;
+            }
+            .post {
+                padding: 14px 16px;
+            }
+            .post .post-content {
+                font-size: 14px;
+            }
+            .setting-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .setting-row .control {
+                justify-content: flex-start;
+            }
+            .modal .btn-row button {
+                flex: 1 1 100%;
+            }
+        }
+
+        /* ===== UTILITY ===== */
+        .hidden {
+            display: none !important;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mt-16 {
+            margin-top: 16px;
+        }
+        .gap-8 {
+            gap: 8px;
+        }
+        .flex {
+            display: flex;
+        }
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .avatar-emoji {
+            font-size: 28px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 14px 28px;
+            box-shadow: 0 8px 40px var(--shadow-color);
+            font-weight: 500;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            border-color: #3ba55d;
+        }
+        .toast.error {
+            border-color: #ed4245;
+        }
+        .toast i {
+            margin-right: 10px;
+        }
+
+        /* Hidden file input */
+        #file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== TOAST ===== -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ===== APP ===== -->
+    <div id="app">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside id="sidebar">
+            <div class="logo" title="Nexus">
+                <i class="fas fa-comet"></i>
+                <span>Nexus</span>
+            </div>
+
+            <button class="nav-btn active" data-view="home" title="Home">
+                <i class="fas fa-home"></i>
+            </button>
+            <button class="nav-btn" data-view="channels" title="Channels">
+                <i class="fas fa-hashtag"></i>
+            </button>
+            <button class="nav-btn" data-view="dms" title="Messages">
+                <i class="fas fa-envelope"></i>
+                <span class="badge hidden" id="dm-badge">0</span>
+            </button>
+
+            <div class="nav-divider"></div>
+
+            <button class="nav-btn" data-view="profile" title="Profile">
+                <i class="fas fa-user"></i>
+            </button>
+            <button class="nav-btn" data-view="settings" title="Settings">
+                <i class="fas fa-cog"></i>
+            </button>
+
+            <div class="user-badge" id="sidebar-user">
+                <div class="avatar" id="sidebar-avatar" title="Click to login/register">
+                    <span>?</span>
+                </div>
+                <div class="username" id="sidebar-username">Guest</div>
+            </div>
+        </aside>
+
+        <!-- ===== MAIN ===== -->
+        <div id="main">
+
+            <!-- HEADER -->
+            <header id="header">
+                <div class="left">
+                    <h2 id="view-title">Home</h2>
+                    <span class="subtitle" id="view-subtitle">Welcome</span>
+                </div>
+                <div class="right">
+                    <div class="search-box" id="header-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Search..." />
+                    </div>
+                    <button class="header-btn" id="header-add" title="Create">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEW CONTAINER -->
+            <div id="view-container">
+
+                <!-- HOME -->
+                <div class="view active" id="view-home">
+                    <div class="glass-card" style="text-align:center; padding:48px 32px;">
+                        <i class="fas fa-comet" style="font-size:64px; color:var(--accent); opacity:0.6; margin-bottom:16px; display:block;"></i>
+                        <h1 style="font-size:28px; font-weight:700; margin-bottom:8px;">Welcome to Nexus</h1>
+                        <p style="color:var(--text-muted); font-size:16px; max-width:480px; margin:0 auto;">
+                            A modern messenger with channels, posts, comments, and more.
+                            <br />Login or register to unlock all features.
+                        </p>
+                        <div style="margin-top:24px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                            <button class="btn-primary" style="padding:10px 28px; border-radius:var(--radius-sm); border:none; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; font-family:var(--font);" onclick="openModal('login')">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                            <button class="btn-secondary" style="padding:10px 28px; border-radius:var(--radius-sm); border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-secondary); font-weight:600; cursor:pointer; font-family:var(--font);" onclick="openModal('register')">
+                                <i class="fas fa-user-plus"></i> Register
+                            </button>
+                            <button class="btn-secondary" style="padding:10px 28px; border-radius:var(--radius-sm); border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-secondary); font-weight:600; cursor:pointer; font-family:var(--font);" onclick="openModal('guest')">
+                                <i class="fas fa-user-secret"></i> Guest
+                            </button>
+                        </div>
+                    </div>
+                    <div style="margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px;">
+                        <div class="glass-card" style="text-align:center; padding:20px;">
+                            <i class="fas fa-hashtag" style="font-size:32px; color:var(--accent);"></i>
+                            <h3 style="margin-top:8px; font-size:18px;" id="stat-channels">0</h3>
+                            <p style="color:var(--text-muted); font-size:13px;">Channels</p>
+                        </div>
+                        <div class="glass-card" style="text-align:center; padding:20px;">
+                            <i class="fas fa-users" style="font-size:32px; color:var(--accent);"></i>
+                            <h3 style="margin-top:8px; font-size:18px;" id="stat-users">0</h3>
+                            <p style="color:var(--text-muted); font-size:13px;">Users</p>
+                        </div>
+                        <div class="glass-card" style="text-align:center; padding:20px;">
+                            <i class="fas fa-comment" style="font-size:32px; color:var(--accent);"></i>
+                            <h3 style="margin-top:8px; font-size:18px;" id="stat-posts">0</h3>
+                            <p style="color:var(--text-muted); font-size:13px;">Posts</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHANNELS -->
+                <div class="view" id="view-channels">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                        <div>
+                            <h3 style="font-size:18px; font-weight:600;">All Channels</h3>
+                            <p style="color:var(--text-muted); font-size:13px;">Discover and join communities</p>
+                        </div>
+                        <button class="btn-primary" style="padding:8px 20px; border-radius:var(--radius-sm); border:none; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; font-family:var(--font);" onclick="openModal('create-channel')">
+                            <i class="fas fa-plus"></i> Create
+                        </button>
+                    </div>
+                    <div id="channel-list" class="channel-grid">
+                        <!-- rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- CHANNEL DETAIL (hidden, shown when a channel is selected) -->
+                <div class="view" id="view-channel-detail">
+                    <div id="channel-detail-content">
+                        <!-- rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- DMS -->
+                <div class="view" id="view-dms">
+                    <div id="dm-view">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                            <div>
+                                <h3 style="font-size:18px; font-weight:600;">Direct Messages</h3>
+                                <p style="color:var(--text-muted); font-size:13px;">Chat with other users</p>
+                            </div>
+                            <button class="btn-primary" style="padding:8px 20px; border-radius:var(--radius-sm); border:none; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; font-family:var(--font);" onclick="openModal('new-dm')">
+                                <i class="fas fa-plus"></i> New DM
+                            </button>
+                        </div>
+                        <div id="dm-list" class="dm-list">
+                            <!-- rendered by JS -->
+                        </div>
+                        <div id="dm-chat-container" style="margin-top:16px; display:none;">
+                            <div class="dm-chat glass-card" style="padding:16px 20px; min-height:300px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding-bottom:10px; margin-bottom:12px;">
+                                    <span id="dm-chat-user" style="font-weight:600;">User</span>
+                                    <button style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:18px;" onclick="closeDmChat()">✕</button>
+                                </div>
+                                <div class="messages" id="dm-messages"></div>
+                                <div class="dm-input">
+                                    <input type="text" id="dm-input-field" placeholder="Type a message..." />
+                                    <button id="dm-send-btn">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROFILE -->
+                <div class="view" id="view-profile">
+                    <div class="profile-section" id="profile-content">
+                        <!-- rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- SETTINGS -->
+                <div class="view" id="view-settings">
+                    <div class="settings-grid" id="settings-content">
+                        <!-- rendered by JS -->
+                    </div>
+                </div>
+
+            </div><!-- /view-container -->
+        </div><!-- /main -->
+    </div><!-- /app -->
+
+    <!-- ===== MODALS ===== -->
+
+    <!-- LOGIN -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal">
+            <h2><i class="fas fa-sign-in-alt" style="color:var(--accent);"></i> Login</h2>
+            <p class="sub">Welcome back! Enter your credentials.</p>
+            <label>Username</label>
+            <input type="text" id="login-username" placeholder="Your username" />
+            <label>Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" />
+            <div class="error" id="login-error">Invalid credentials.</div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal('login')">Cancel</button>
+                <button class="btn-primary" onclick="handleLogin()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="modal-overlay" id="modal-register">
+        <div class="modal">
+            <h2><i class="fas fa-user-plus" style="color:var(--accent);"></i> Register</h2>
+            <p class="sub">Create your account and join the community.</p>
+            <label>Username</label>
+            <input type="text" id="register-username" placeholder="Choose a username" />
+            <label>Password</label>
+            <input type="password" id="register-password" placeholder="••••••••" minlength="4" />
+            <label>Confirm Password</label>
+            <input type="password" id="register-password2" placeholder="••••••••" />
+            <div class="error" id="register-error">Passwords don't match or username taken.</div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal('register')">Cancel</button>
+                <button class="btn-primary" onclick="handleRegister()">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GUEST -->
+    <div class="modal-overlay" id="modal-guest">
+        <div class="modal">
+            <h2><i class="fas fa-user-secret" style="color:var(--accent);"></i> Guest Mode</h2>
+            <p class="sub">Enter a name to browse as a guest. You can register later.</p>
+            <label>Your Name</label>
+            <input type="text" id="guest-username" placeholder="Enter a name" />
+            <div class="error" id="guest-error">Please enter a name.</div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal('guest')">Cancel</button>
+                <button class="btn-primary" onclick="handleGuest()">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE CHANNEL -->
+    <div class="modal-overlay" id="modal-create-channel">
+        <div class="modal">
+            <h2><i class="fas fa-hashtag" style="color:var(--accent);"></i> Create Channel</h2>
+            <p class="sub">Start a new community.</p>
+            <label>Channel Name</label>
+            <input type="text" id="channel-name-input" placeholder="My awesome channel" />
+            <div class="error" id="channel-error">Name is required.</div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal('create-channel')">Cancel</button>
+                <button class="btn-primary" onclick="handleCreateChannel()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW DM -->
+    <div class="modal-overlay" id="modal-new-dm">
+        <div class="modal">
+            <h2><i class="fas fa-envelope" style="color:var(--accent);"></i> New DM</h2>
+            <p class="sub">Start a private conversation.</p>
+            <label>Username</label>
+            <input type="text" id="dm-target-input" placeholder="Enter username" />
+            <div class="error" id="dm-target-error">User not found.</div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal('new-dm')">Cancel</button>
+                <button class="btn-primary" onclick="handleNewDm()">Start Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE USERNAME -->
+    <div class="modal-overlay" id="modal-change-username">
+        <div class="modal">
+            <h2><i class="fas fa-pen" style="color:var(--accent);"></i> Change Username</h2>
+            <p class="sub">Enter your current password to confirm.</p>
+            <label>New Username</label>
+            <input type="text" id="new-username-input" placeholder="New username" />
+            <label>Current Password</label>
+            <input type="password" id="change-password-input" placeholder="••••••••" />
+            <div class="error" id="change-user-error">Invalid password or username taken.</div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal('change-username')">Cancel</button>
+                <button class="btn-primary" onclick="handleChangeUsername()">Change</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE AVATAR (emoji picker) -->
+    <div class="modal-overlay" id="modal-avatar">
+        <div class="modal">
+            <h2><i class="fas fa-image" style="color:var(--accent);"></i> Change Avatar</h2>
+            <p class="sub">Pick an emoji or upload an image.</p>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0;" id="emoji-picker">
+                <!-- rendered by JS -->
+            </div>
+            <div style="text-align:center; margin:12px 0;">
+                <button class="btn-secondary" onclick="document.getElementById('file-input').click()" style="padding:8px 20px; border-radius:var(--radius-sm); border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-secondary); cursor:pointer; font-family:var(--font);">
+                    <i class="fas fa-upload"></i> Upload Image
+                </button>
+                <input type="file" id="file-input" accept="image/*" />
+            </div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal('avatar')">Cancel</button>
+                <button class="btn-primary" onclick="handleAvatarEmoji()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // ============================================================
+        // DATA LAYER
+        // ============================================================
+
+        const DEFAULT_DATA = {
+            users: {},
+            channels: {},
+            dms: {},
+            settings: {
+                theme: 'light',
+                language: 'en',
+                background: '#e8edf5'
+            }
+        };
+
+        let DB = null;
+        let currentUser = null; // username or null (guest)
+        let currentView = 'home';
+        let selectedChannel = null;
+        let selectedDmUser = null;
+        let currentLanguage = 'en';
+
+        const LANGUAGES = {
+            en: {
+                name: 'English',
+                home: 'Home',
+                channels: 'Channels',
+                dms: 'Messages',
+                profile: 'Profile',
+                settings: 'Settings',
+                welcome: 'Welcome',
+                guest: 'Guest',
+                login: 'Login',
+                register: 'Register',
+                logout: 'Logout',
+                create: 'Create',
+                search: 'Search...',
+                no_channels: 'No channels yet. Create one!',
+                no_dms: 'No messages yet. Start a conversation!',
+                no_posts: 'No posts in this channel yet.',
+                subscribe: 'Subscribe',
+                subscribed: 'Subscribed',
+                likes: 'Likes',
+                comments: 'Comments',
+                send: 'Send',
+                type_message: 'Type a message...',
+                change_avatar: 'Change Avatar',
+                change_username: 'Change Username',
+                theme: 'Theme',
+                language: 'Language',
+                background: 'Background',
+                light: 'Light',
+                dark: 'Dark',
+                save: 'Save',
+                cancel: 'Cancel',
+                confirm: 'Confirm',
+                delete: 'Delete',
+                edit: 'Edit',
+                view: 'View',
+                owner: 'Owner',
+                subscribers: 'Subscribers',
+                posts: 'Posts',
+                online: 'Online',
+                offline: 'Offline',
+                settings_saved: 'Settings saved!',
+                avatar_updated: 'Avatar updated!',
+                username_changed: 'Username changed!',
+                channel_created: 'Channel created!',
+                post_created: 'Post created!',
+                comment_added: 'Comment added!',
+                dm_sent: 'Message sent!',
+                login_success: 'Logged in successfully!',
+                register_success: 'Registered successfully!',
+                guest_success: 'Welcome, guest!',
+                logout_success: 'Logged out.',
+                error_generic: 'Something went wrong.',
+                error_password: 'Incorrect password.',
+                error_username_taken: 'Username already taken.',
+                error_user_not_found: 'User not found.',
+                error_required: 'This field is required.',
+                error_passwords: 'Passwords do not match.',
+                new_dm: 'New DM',
+                start_chat: 'Start Chat',
+                type_comment: 'Write a comment...',
+                post: 'Post',
+                channel_name: 'Channel Name',
+                create_channel: 'Create Channel',
+                delete_channel: 'Delete Channel',
+                confirm_delete: 'Are you sure you want to delete this?',
+                yes: 'Yes',
+                no: 'No'
+            },
+            ru: {
+                name: 'Русский',
+                home: 'Главная',
+                channels: 'Каналы',
+                dms: 'Сообщения',
+                profile: 'Профиль',
+                settings: 'Настройки',
+                welcome: 'Добро пожаловать',
+                guest: 'Гость',
+                login: 'Войти',
+                register: 'Регистрация',
+                logout: 'Выйти',
+                create: 'Создать',
+                search: 'Поиск...',
+                no_channels: 'Пока нет каналов. Создайте первый!',
+                no_dms: 'Нет сообщений. Начните диалог!',
+                no_posts: 'В этом канале пока нет постов.',
+                subscribe: 'Подписаться',
+                subscribed: 'Подписан',
+                likes: 'Лайки',
+                comments: 'Комментарии',
+                send: 'Отправить',
+                type_message: 'Напишите сообщение...',
+                change_avatar: 'Сменить аватар',
+                change_username: 'Сменить имя',
+                theme: 'Тема',
+                language: 'Язык',
+                background: 'Фон',
+                light: 'Светлая',
+                dark: 'Тёмная',
+                save: 'Сохранить',
+                cancel: 'Отмена',
+                confirm: 'Подтвердить',
+                delete: 'Удалить',
+                edit: 'Изменить',
+                view: 'Просмотр',
+                owner: 'Владелец',
+                subscribers: 'Подписчики',
+                posts: 'Посты',
+                online: 'В сети',
+                offline: 'Не в сети',
+                settings_saved: 'Настройки сохранены!',
+                avatar_updated: 'Аватар обновлён!',
+                username_changed: 'Имя изменено!',
+                channel_created: 'Канал создан!',
+                post_created: 'Пост создан!',
+                comment_added: 'Комментарий добавлен!',
+                dm_sent: 'Сообщение отправлено!',
+                login_success: 'Вход выполнен!',
+                register_success: 'Регистрация успешна!',
+                guest_success: 'Добро пожаловать, гость!',
+                logout_success: 'Выход выполнен.',
+                error_generic: 'Что-то пошло не так.',
+                error_password: 'Неверный пароль.',
+                error_username_taken: 'Имя уже занято.',
+                error_user_not_found: 'Пользователь не найден.',
+                error_required: 'Это поле обязательно.',
+                error_passwords: 'Пароли не совпадают.',
+                new_dm: 'Новое сообщение',
+                start_chat: 'Начать чат',
+                type_comment: 'Напишите комментарий...',
+                post: 'Опубликовать',
+                channel_name: 'Название канала',
+                create_channel: 'Создать канал',
+                delete_channel: 'Удалить канал',
+                confirm_delete: 'Вы уверены, что хотите удалить это?',
+                yes: 'Да',
+                no: 'Нет'
+            },
+            fr: {
+                name: 'Français',
+                home: 'Accueil',
+                channels: 'Salons',
+                dms: 'Messages',
+                profile: 'Profil',
+                settings: 'Paramètres',
+                welcome: 'Bienvenue',
+                guest: 'Invité',
+                login: 'Connexion',
+                register: 'Inscription',
+                logout: 'Déconnexion',
+                create: 'Créer',
+                search: 'Rechercher...',
+                no_channels: 'Aucun salon. Créez-en un !',
+                no_dms: 'Aucun message. Commencez une conversation !',
+                no_posts: 'Aucun post dans ce salon.',
+                subscribe: 'S\'abonner',
+                subscribed: 'Abonné',
+                likes: 'J\'aime',
+                comments: 'Commentaires',
+                send: 'Envoyer',
+                type_message: 'Écrivez un message...',
+                change_avatar: 'Changer l\'avatar',
+                change_username: 'Changer le nom',
+                theme: 'Thème',
+                language: 'Langue',
+                background: 'Fond',
+                light: 'Clair',
+                dark: 'Sombre',
+                save: 'Enregistrer',
+                cancel: 'Annuler',
+                confirm: 'Confirmer',
+                delete: 'Supprimer',
+                edit: 'Modifier',
+                view: 'Voir',
+                owner: 'Propriétaire',
+                subscribers: 'Abonnés',
+                posts: 'Posts',
+                online: 'En ligne',
+                offline: 'Hors ligne',
+                settings_saved: 'Paramètres enregistrés !',
+                avatar_updated: 'Avatar mis à jour !',
+                username_changed: 'Nom changé !',
+                channel_created: 'Salon créé !',
+                post_created: 'Post créé !',
+                comment_added: 'Commentaire ajouté !',
+                dm_sent: 'Message envoyé !',
+                login_success: 'Connecté avec succès !',
+                register_success: 'Inscription réussie !',
+                guest_success: 'Bienvenue, invité !',
+                logout_success: 'Déconnecté.',
+                error_generic: 'Une erreur est survenue.',
+                error_password: 'Mot de passe incorrect.',
+                error_username_taken: 'Nom déjà utilisé.',
+                error_user_not_found: 'Utilisateur introuvable.',
+                error_required: 'Ce champ est requis.',
+                error_passwords: 'Les mots de passe ne correspondent pas.',
+                new_dm: 'Nouveau message',
+                start_chat: 'Commencer le chat',
+                type_comment: 'Écrire un commentaire...',
+                post: 'Publier',
+                channel_name: 'Nom du salon',
+                create_channel: 'Créer un salon',
+                delete_channel: 'Supprimer le salon',
+                confirm_delete: 'Êtes-vous sûr de vouloir supprimer ceci ?',
+                yes: 'Oui',
+                no: 'Non'
+            },
+            es: {
+                name: 'Español',
+                home: 'Inicio',
+                channels: 'Canales',
+                dms: 'Mensajes',
+                profile: 'Perfil',
+                settings: 'Ajustes',
+                welcome: 'Bienvenido',
+                guest: 'Invitado',
+                login: 'Iniciar sesión',
+                register: 'Registrarse',
+                logout: 'Cerrar sesión',
+                create: 'Crear',
+                search: 'Buscar...',
+                no_channels: 'No hay canales. ¡Crea uno!',
+                no_dms: 'No hay mensajes. ¡Inicia una conversación!',
+                no_posts: 'No hay publicaciones en este canal.',
+                subscribe: 'Suscribirse',
+                subscribed: 'Suscrito',
+                likes: 'Me gusta',
+                comments: 'Comentarios',
+                send: 'Enviar',
+                type_message: 'Escribe un mensaje...',
+                change_avatar: 'Cambiar avatar',
+                change_username: 'Cambiar nombre',
+                theme: 'Tema',
+                language: 'Idioma',
+                background: 'Fondo',
+                light: 'Claro',
+                dark: 'Oscuro',
+                save: 'Guardar',
+                cancel: 'Cancelar',
+                confirm: 'Confirmar',
+                delete: 'Eliminar',
+                edit: 'Editar',
+                view: 'Ver',
+                owner: 'Propietario',
+                subscribers: 'Suscriptores',
+                posts: 'Publicaciones',
+                online: 'En línea',
+                offline: 'Desconectado',
+                settings_saved: '¡Ajustes guardados!',
+                avatar_updated: '¡Avatar actualizado!',
+                username_changed: '¡Nombre cambiado!',
+                channel_created: '¡Canal creado!',
+                post_created: '¡Publicación creada!',
+                comment_added: '¡Comentario añadido!',
+                dm_sent: '¡Mensaje enviado!',
+                login_success: '¡Sesión iniciada!',
+                register_success: '¡Registro exitoso!',
+                guest_success: '¡Bienvenido, invitado!',
+                logout_success: 'Sesión cerrada.',
+                error_generic: 'Algo salió mal.',
+                error_password: 'Contraseña incorrecta.',
+                error_username_taken: 'Nombre ya en uso.',
+                error_user_not_found: 'Usuario no encontrado.',
+                error_required: 'Este campo es obligatorio.',
+                error_passwords: 'Las contraseñas no coinciden.',
+                new_dm: 'Nuevo mensaje',
+                start_chat: 'Iniciar chat',
+                type_comment: 'Escribe un comentario...',
+                post: 'Publicar',
+                channel_name: 'Nombre del canal',
+                create_channel: 'Crear canal',
+                delete_channel: 'Eliminar canal',
+                confirm_delete: '¿Estás seguro de que quieres eliminar esto?',
+                yes: 'Sí',
+                no: 'No'
+            },
+            de: {
+                name: 'Deutsch',
+                home: 'Startseite',
+                channels: 'Kanäle',
+                dms: 'Nachrichten',
+                profile: 'Profil',
+                settings: 'Einstellungen',
+                welcome: 'Willkommen',
+                guest: 'Gast',
+                login: 'Anmelden',
+                register: 'Registrieren',
+                logout: 'Abmelden',
+                create: 'Erstellen',
+                search: 'Suchen...',
+                no_channels: 'Keine Kanäle. Erstelle einen!',
+                no_dms: 'Keine Nachrichten. Starte ein Gespräch!',
+                no_posts: 'Keine Beiträge in diesem Kanal.',
+                subscribe: 'Abonnieren',
+                subscribed: 'Abonniert',
+                likes: 'Gefällt mir',
+                comments: 'Kommentare',
+                send: 'Senden',
+                type_message: 'Schreibe eine Nachricht...',
+                change_avatar: 'Avatar ändern',
+                change_username: 'Benutzername ändern',
+                theme: 'Thema',
+                language: 'Sprache',
+                background: 'Hintergrund',
+                light: 'Hell',
+                dark: 'Dunkel',
+                save: 'Speichern',
+                cancel: 'Abbrechen',
+                confirm: 'Bestätigen',
+                delete: 'Löschen',
+                edit: 'Bearbeiten',
+                view: 'Ansehen',
+                owner: 'Besitzer',
+                subscribers: 'Abonnenten',
+                posts: 'Beiträge',
+                online: 'Online',
+                offline: 'Offline',
+                settings_saved: 'Einstellungen gespeichert!',
+                avatar_updated: 'Avatar aktualisiert!',
+                username_changed: 'Benutzername geändert!',
+                channel_created: 'Kanal erstellt!',
+                post_created: 'Beitrag erstellt!',
+                comment_added: 'Kommentar hinzugefügt!',
+                dm_sent: 'Nachricht gesendet!',
+                login_success: 'Erfolgreich angemeldet!',
+                register_success: 'Erfolgreich registriert!',
+                guest_success: 'Willkommen, Gast!',
+                logout_success: 'Abgemeldet.',
+                error_generic: 'Etwas ist schief gelaufen.',
+                error_password: 'Falsches Passwort.',
+                error_username_taken: 'Benutzername bereits vergeben.',
+                error_user_not_found: 'Benutzer nicht gefunden.',
+                error_required: 'Dieses Feld ist erforderlich.',
+                error_passwords: 'Passwörter stimmen nicht überein.',
+                new_dm: 'Neue Nachricht',
+                start_chat: 'Chat starten',
+                type_comment: 'Schreibe einen Kommentar...',
+                post: 'Veröffentlichen',
+                channel_name: 'Kanalname',
+                create_channel: 'Kanal erstellen',
+                delete_channel: 'Kanal löschen',
+                confirm_delete: 'Bist du sicher, dass du das löschen möchtest?',
+                yes: 'Ja',
+                no: 'Nein'
+            }
+        };
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+
+        function t(key) {
+            return LANGUAGES[currentLanguage]?.[key] || LANGUAGES.en[key] || key;
+        }
+
+        function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+        function timeAgo(ts) {
+            const diff = Date.now() - ts;
+            if (diff < 60000) return 'now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+            return Math.floor(diff / 86400000) + 'd';
+        }
+
+        function formatTime(ts) {
+            return new Date(ts).toLocaleString();
+        }
+
+        function getAvatarHtml(username, size = 36) {
+            const user = DB.users[username];
+            if (user && user.avatar) {
+                if (user.avatar.startsWith('data:image') || user.avatar.startsWith('http')) {
+                    return `<img src="${user.avatar}" alt="${username}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;" />`;
+                }
+                // emoji
+                return `<span style="font-size:${size*0.6}px;">${user.avatar}</span>`;
+            }
+            // fallback: first letter
+            return `<span style="font-size:${size*0.45}px;font-weight:600;">${username.charAt(0).toUpperCase()}</span>`;
+        }
+
+        function getAvatarData(username) {
+            const user = DB.users[username];
+            if (user && user.avatar) return user.avatar;
+            return null;
+        }
+
+        function getInitials(username) {
+            return username.charAt(0).toUpperCase();
+        }
+
+        function toast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast ' + type;
+            // add icon
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${msg}`;
+            el.classList.add('show');
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        // ============================================================
+        // DB OPERATIONS
+        // ============================================================
+
+        function loadDB() {
+            try {
+                const raw = localStorage.getItem('nexus_db');
+                if (raw) {
+                    DB = JSON.parse(raw);
+                    // ensure all fields
+                    if (!DB.users) DB.users = {};
+                    if (!DB.channels) DB.channels = {};
+                    if (!DB.dms) DB.dms = {};
+                    if (!DB.settings) DB.settings = { theme: 'light', language: 'en', background: '#e8edf5' };
+                } else {
+                    DB = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                }
+            } catch {
+                DB = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            }
+            // set language from settings
+            currentLanguage = DB.settings.language || 'en';
+            applyTheme(DB.settings.theme || 'light');
+            applyBackground(DB.settings.background || '#e8edf5');
+            saveDB();
+        }
+
+        function saveDB() {
+            localStorage.setItem('nexus_db', JSON.stringify(DB));
+        }
+
+        function getSession() {
+            return localStorage.getItem('nexus_session') || null;
+        }
+
+        function setSession(username) {
+            if (username) {
+                localStorage.setItem('nexus_session', username);
+            } else {
+                localStorage.removeItem('nexus_session');
+            }
+            currentUser = username;
+            updateSidebar();
+            updateAllViews();
+        }
+
+        // ============================================================
+        // AUTH
+        // ============================================================
+
+        function handleLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const err = document.getElementById('login-error');
+            err.classList.remove('show');
+
+            if (!username || !password) {
+                err.textContent = t('error_required');
+                err.classList.add('show');
+                return;
+            }
+            const user = DB.users[username];
+            if (!user || user.password !== password) {
+                err.textContent = t('error_password');
+                err.classList.add('show');
+                return;
+            }
+            closeModal('login');
+            setSession(username);
+            toast(t('login_success'), 'success');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            navigate('home');
+        }
+
+        function handleRegister() {
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value;
+            const password2 = document.getElementById('register-password2').value;
+            const err = document.getElementById('register-error');
+            err.classList.remove('show');
+
+            if (!username || !password || !password2) {
+                err.textContent = t('error_required');
+                err.classList.add('show');
+                return;
+            }
+            if (password !== password2) {
+                err.textContent = t('error_passwords');
+                err.classList.add('show');
+                return;
+            }
+            if (password.length < 4) {
+                err.textContent = 'Password must be at least 4 characters.';
+                err.classList.add('show');
+                return;
+            }
+            if (DB.users[username]) {
+                err.textContent = t('error_username_taken');
+                err.classList.add('show');
+                return;
+            }
+            DB.users[username] = {
+                password: password,
+                avatar: null,
+                createdAt: Date.now()
+            };
+            saveDB();
+            closeModal('register');
+            setSession(username);
+            toast(t('register_success'), 'success');
+            document.getElementById('register-username').value = '';
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-password2').value = '';
+            navigate('home');
+            updateAllViews();
+        }
+
+        function handleGuest() {
+            const username = document.getElementById('guest-username').value.trim();
+            const err = document.getElementById('guest-error');
+            err.classList.remove('show');
+            if (!username) {
+                err.textContent = t('error_required');
+                err.classList.add('show');
+                return;
+            }
+            // Check if username exists as a registered user - if so, ask to login instead
+            if (DB.users[username]) {
+                err.textContent = 'This username is registered. Please login.';
+                err.classList.add('show');
+                return;
+            }
+            closeModal('guest');
+            // Create a temporary guest "user" without password
+            if (!DB.users['__guest_' + username]) {
+                DB.users['__guest_' + username] = {
+                    password: null,
+                    avatar: null,
+                    createdAt: Date.now(),
+                    isGuest: true,
+                    guestName: username
+                };
+                saveDB();
+            }
+            setSession('__guest_' + username);
+            toast(t('guest_success'), 'success');
+            document.getElementById('guest-username').value = '';
+            navigate('home');
+            updateAllViews();
+        }
+
+        function handleLogout() {
+            setSession(null);
+            toast(t('logout_success'), 'info');
+            navigate('home');
+            updateAllViews();
+        }
+
+        // ============================================================
+        // USER PROFILE
+        // ============================================================
+
+        function getDisplayName(username) {
+            if (!username) return 'Guest';
+            if (username.startsWith('__guest_')) {
+                const guest = DB.users[username];
+                return guest?.guestName || 'Guest';
+            }
+            return username;
+        }
+
+        function isGuestUser(username) {
+            return username && username.startsWith('__guest_');
+        }
+
+        function isRegisteredUser(username) {
+            return username && !username.startsWith('__guest_') && DB.users[username];
+        }
+
+        function handleChangeUsername() {
+            const newName = document.getElementById('new-username-input').value.trim();
+            const password = document.getElementById('change-password-input').value;
+            const err = document.getElementById('change-user-error');
+            err.classList.remove('show');
+
+            if (!currentUser || isGuestUser(currentUser)) {
+                toast('Only registered users can change username.', 'error');
+                return;
+            }
+            if (!newName || !password) {
+                err.textContent = t('error_required');
+                err.classList.add('show');
+                return;
+            }
+            const user = DB.users[currentUser];
+            if (!user || user.password !== password) {
+                err.textContent = t('error_password');
+                err.classList.add('show');
+                return;
+            }
+            if (DB.users[newName] && newName !== currentUser) {
+                err.textContent = t('error_username_taken');
+                err.classList.add('show');
+                return;
+            }
+            // Update username in all data
+            const oldName = currentUser;
+            // Move user data
+            DB.users[newName] = {
+                password: user.password,
+                avatar: user.avatar,
+                createdAt: user.createdAt
+            };
+            if (newName !== oldName) {
+                delete DB.users[oldName];
+                // Update in channels
+                for (const cid in DB.channels) {
+                    const ch = DB.channels[cid];
+                    if (ch.owner === oldName) ch.owner = newName;
+                    // subscribers
+                    const idx = ch.subscribers.indexOf(oldName);
+                    if (idx !== -1) ch.subscribers[idx] = newName;
+                    // posts
+                    ch.posts.forEach(p => {
+                        if (p.author === oldName) p.author = newName;
+                        p.comments.forEach(c => {
+                            if (c.author === oldName) c.author = newName;
+                        });
+                        const li = p.likes.indexOf(oldName);
+                        if (li !== -1) p.likes[li] = newName;
+                    });
+                }
+                // Update DMs
+                const newDms = {};
+                for (const key in DB.dms) {
+                    const parts = key.split('_');
+                    if (parts.includes(oldName)) {
+                        const newKey = parts.map(p => p === oldName ? newName : p).sort().join('_');
+                        newDms[newKey] = DB.dms[key];
+                        // update messages
+                        newDms[newKey].forEach(m => {
+                            if (m.from === oldName) m.from = newName;
+                            if (m.to === oldName) m.to = newName;
+                        });
+                    } else {
+                        newDms[key] = DB.dms[key];
+                    }
+                }
+                DB.dms = newDms;
+                saveDB();
+                setSession(newName);
+                toast(t('username_changed'), 'success');
+                closeModal('change-username');
+                document.getElementById('new-username-input').value = '';
+                document.getElementById('change-password-input').value = '';
+                updateAllViews();
+            } else {
+                toast('New username is the same as current.', 'info');
+            }
+        }
+
+        // ============================================================
+        // AVATAR
+        // ============================================================
+
+        let selectedAvatarEmoji = '😊';
+
+        function openAvatarModal() {
+            if (!currentUser) {
+                toast('Please login or register first.', 'error');
+                return;
+            }
+            if (isGuestUser(currentUser)) {
+                toast('Guests cannot change avatar. Please register.', 'error');
+                return;
+            }
+            // Render emoji picker
+            const emojis = ['😊', '😎', '🤩', '👨‍💻', '👩‍💻', '🧑‍💻', '🐱', '🐶', '🦊', '🐼', '🚀', '⭐', '🌈', '🔥', '💎', '🎮', '📚', '🎵', '🏀', '⚽',
+                '🍕', '🍔', '🌮', '🍣', '🎂', '☕', '🍻', '🎉', '🏆', '💯'
+            ];
+            const container = document.getElementById('emoji-picker');
+            container.innerHTML = emojis.map(e =>
+                `<button style="font-size:28px; width:44px; height:44px; border-radius:50%; border:2px solid ${selectedAvatarEmoji===e?'var(--accent)':'var(--input-border)'}; background:var(--input-bg); cursor:pointer; transition:all 0.2s;" onclick="selectEmoji('${e}')">${e}</button>`
+            ).join('');
+            // Set current avatar if exists
+            const user = DB.users[currentUser];
+            if (user && user.avatar && !user.avatar.startsWith('data:image') && !user.avatar.startsWith('http')) {
+                selectedAvatarEmoji = user.avatar;
+            } else {
+                selectedAvatarEmoji = '😊';
+            }
+            // highlight
+            document.querySelectorAll('#emoji-picker button').forEach(b => {
+                if (b.textContent === selectedAvatarEmoji) {
+                    b.style.borderColor = 'var(--accent)';
+                    b.style.boxShadow = '0 0 0 3px var(--accent-light)';
+                }
+            });
+            openModal('avatar');
+        }
+
+        function selectEmoji(e) {
+            selectedAvatarEmoji = e;
+            document.querySelectorAll('#emoji-picker button').forEach(b => {
+                b.style.borderColor = b.textContent === e ? 'var(--accent)' : 'var(--input-border)';
+                b.style.boxShadow = b.textContent === e ? '0 0 0 3px var(--accent-light)' : 'none';
+            });
+        }
+
+        function handleAvatarEmoji() {
+            if (!currentUser || !DB.users[currentUser]) return;
+            DB.users[currentUser].avatar = selectedAvatarEmoji;
+            saveDB();
+            closeModal('avatar');
+            toast(t('avatar_updated'), 'success');
+            updateSidebar();
+            updateAllViews();
+        }
+
+        // File upload for avatar
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const dataUrl = ev.target.result;
+                if (currentUser && DB.users[currentUser]) {
+                    DB.users[currentUser].avatar = dataUrl;
+                    saveDB();
+                    toast(t('avatar_updated'), 'success');
+                    updateSidebar();
+                    updateAllViews();
+                    closeModal('avatar');
+                }
+                document.getElementById('file-input').value = '';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ============================================================
+        // CHANNELS
+        // ============================================================
+
+        function handleCreateChannel() {
+            const name = document.getElementById('channel-name-input').value.trim();
+            const err = document.getElementById('channel-error');
+            err.classList.remove('show');
+            if (!name) {
+                err.textContent = t('error_required');
+                err.classList.add('show');
+                return;
+            }
+            // Check duplicate
+            for (const cid in DB.channels) {
+                if (DB.channels[cid].name.toLowerCase() === name.toLowerCase()) {
+                    err.textContent = 'Channel with this name already exists.';
+                    err.classList.add('show');
+                    return;
+                }
+            }
+            const cid = uid();
+            DB.channels[cid] = {
+                name: name,
+                owner: currentUser || 'anonymous',
+                createdAt: Date.now(),
+                subscribers: currentUser ? [currentUser] : [],
+                posts: []
+            };
+            saveDB();
+            closeModal('create-channel');
+            document.getElementById('channel-name-input').value = '';
+            toast(t('channel_created'), 'success');
+            navigate('channels');
+            updateAllViews();
+        }
+
+        function deleteChannel(cid) {
+            if (!confirm(t('confirm_delete'))) return;
+            if (DB.channels[cid]) {
+                delete DB.channels[cid];
+                saveDB();
+                toast('Channel deleted.', 'info');
+                if (selectedChannel === cid) {
+                    selectedChannel = null;
+                    navigate('channels');
+                }
+                updateAllViews();
+            }
+        }
+
+        function toggleSubscribe(cid) {
+            if (!currentUser) {
+                toast('Please login or register to subscribe.', 'error');
+                return;
+            }
+            const ch = DB.channels[cid];
+            if (!ch) return;
+            const idx = ch.subscribers.indexOf(currentUser);
+            if (idx === -1) {
+                ch.subscribers.push(currentUser);
+            } else {
+                ch.subscribers.splice(idx, 1);
+            }
+            saveDB();
+            updateAllViews();
+        }
+
+        function createPost(cid) {
+            if (!currentUser) {
+                toast('Please login or register to post.', 'error');
+                return;
+            }
+            const content = document.getElementById('post-input')?.value?.trim();
+            if (!content) {
+                toast('Please write something.', 'error');
+                return;
+            }
+            const ch = DB.channels[cid];
+            if (!ch) return;
+            ch.posts.push({
+                id: uid(),
+                author: currentUser,
+                content: content,
+                createdAt: Date.now(),
+                likes: [],
+                comments: []
+            });
+            saveDB();
+            document.getElementById('post-input').value = '';
+            toast(t('post_created'), 'success');
+            renderChannelDetail(cid);
+        }
+
+        function toggleLike(cid, pid) {
+            if (!currentUser) {
+                toast('Please login or register to like.', 'error');
+                return;
+            }
+            const ch = DB.channels[cid];
+            if (!ch) return;
+            const post = ch.posts.find(p => p.id === pid);
+            if (!post) return;
+            const idx = post.likes.indexOf(currentUser);
+            if (idx === -1) {
+                post.likes.push(currentUser);
+            } else {
+                post.likes.splice(idx, 1);
+            }
+            saveDB();
+            renderChannelDetail(cid);
+        }
+
+        function addComment(cid, pid) {
+            if (!currentUser) {
+                toast('Please login or register to comment.', 'error');
+                return;
+            }
+            const input = document.getElementById(`comment-input-${pid}`);
+            if (!input) return;
+            const content = input.value.trim();
+            if (!content) {
+                toast('Please write a comment.', 'error');
+                return;
+            }
+            const ch = DB.channels[cid];
+            if (!ch) return;
+            const post = ch.posts.find(p => p.id === pid);
+            if (!post) return;
+            post.comments.push({
+                author: currentUser,
+                content: content,
+                createdAt: Date.now()
+            });
+            saveDB();
+            input.value = '';
+            toast(t('comment_added'), 'success');
+            renderChannelDetail(cid);
+        }
+
+        // ============================================================
+        // DMS
+        // ============================================================
+
+        function getDmKey(user1, user2) {
+            return [user1, user2].sort().join('_');
+        }
+
+        function getDmMessages(user1, user2) {
+            const key = getDmKey(user1, user2);
+            if (!DB.dms[key]) DB.dms[key] = [];
+            return DB.dms[key];
+        }
+
+        function sendDm(from, to, content) {
+            if (!content.trim()) return;
+            const key = getDmKey(from, to);
+            if (!DB.dms[key]) DB.dms[key] = [];
+            DB.dms[key].push({
+                from: from,
+                to: to,
+                content: content.trim(),
+                timestamp: Date.now()
+            });
+            saveDB();
+            if (selectedDmUser === to || selectedDmUser === from) {
+                renderDmChat(selectedDmUser);
+            }
+            updateDmBadge();
+        }
+
+        function getDmUsers() {
+            const users = new Set();
+            for (const key in DB.dms) {
+                const parts = key.split('_');
+                parts.forEach(p => {
+                    if (p !== currentUser) users.add(p);
+                });
+            }
+            return Array.from(users);
+        }
+
+        function getUnreadDmCount() {
+            // Simple: count messages not from current user in DMs where current user is involved
+            if (!currentUser) return 0;
+            let count = 0;
+            for (const key in DB.dms) {
+                if (key.includes(currentUser)) {
+                    const msgs = DB.dms[key];
+                    msgs.forEach(m => {
+                        if (m.from !== currentUser) count++;
+                    });
+                }
+            }
+            return count;
+        }
+
+        function updateDmBadge() {
+            const badge = document.getElementById('dm-badge');
+            const count = getUnreadDmCount();
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function handleNewDm() {
+            const target = document.getElementById('dm-target-input').value.trim();
+            const err = document.getElementById('dm-target-error');
+            err.classList.remove('show');
+            if (!target) {
+                err.textContent = t('error_required');
+                err.classList.add('show');
+                return;
+            }
+            // Check if user exists (registered or guest)
+            const userExists = DB.users[target] || DB.users['__guest_' + target];
+            // Also check if there's a guest with that name
+            let actualUser = target;
+            if (!DB.users[target]) {
+                // check guest
+                for (const u in DB.users) {
+                    if (u.startsWith('__guest_') && DB.users[u].guestName === target) {
+                        actualUser = u;
+                        break;
+                    }
+                }
+                if (!DB.users[actualUser]) {
+                    err.textContent = t('error_user_not_found');
+                    err.classList.add('show');
+                    return;
+                }
+            }
+            if (actualUser === currentUser) {
+                err.textContent = "You can't DM yourself.";
+                err.classList.add('show');
+                return;
+            }
+            closeModal('new-dm');
+            document.getElementById('dm-target-input').value = '';
+            // Open DM chat
+            selectedDmUser = actualUser;
+            renderDmChat(actualUser);
+            navigate('dms');
+        }
+
+        function openDmChat(username) {
+            selectedDmUser = username;
+            renderDmChat(username);
+            navigate('dms');
+        }
+
+        function closeDmChat() {
+            selectedDmUser = null;
+            document.getElementById('dm-chat-container').style.display = 'none';
+            renderDmList();
+        }
+
+        // ============================================================
+        // RENDER FUNCTIONS
+        // ============================================================
+
+        function updateSidebar() {
+            const avatarEl = document.getElementById('sidebar-avatar');
+            const nameEl = document.getElementById('sidebar-username');
+            if (currentUser) {
+                const display = getDisplayName(currentUser);
+                nameEl.textContent = display.length > 10 ? display.slice(0, 10) + '…' : display;
+                const avatarData = getAvatarData(currentUser);
+                if (avatarData) {
+                    if (avatarData.startsWith('data:image') || avatarData.startsWith('http')) {
+                        avatarEl.innerHTML = `<img src="${avatarData}" alt="${display}" />`;
+                    } else {
+                        avatarEl.innerHTML = `<span style="font-size:24px;">${avatarData}</span>`;
+                    }
+                } else {
+                    avatarEl.innerHTML = `<span style="font-size:18px;font-weight:600;">${display.charAt(0).toUpperCase()}</span>`;
+                }
+            } else {
+                nameEl.textContent = 'Guest';
+                avatarEl.innerHTML = '<span>?</span>';
+            }
+            // Update badge count
+            updateDmBadge();
+        }
+
+        function updateAllViews() {
+            renderHomeStats();
+            renderChannelList();
+            if (selectedChannel) renderChannelDetail(selectedChannel);
+            renderDmList();
+            renderProfile();
+            renderSettings();
+            updateDmBadge();
+        }
+
+        function renderHomeStats() {
+            const chCount = Object.keys(DB.channels).length;
+            const userCount = Object.keys(DB.users).filter(u => !u.startsWith('__guest_')).length;
+            let postCount = 0;
+            for (const cid in DB.channels) {
+                postCount += DB.channels[cid].posts.length;
+            }
+            document.getElementById('stat-channels').textContent = chCount;
+            document.getElementById('stat-users').textContent = userCount;
+            document.getElementById('stat-posts').textContent = postCount;
+        }
+
+        function renderChannelList() {
+            const container = document.getElementById('channel-list');
+            const channels = Object.entries(DB.channels);
+            if (channels.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-hashtag"></i><h3>${t('no_channels')}</h3></div>`;
+                return;
+            }
+            container.innerHTML = channels.map(([cid, ch]) => {
+                const isSub = currentUser && ch.subscribers.includes(currentUser);
+                const isOwner = currentUser && ch.owner === currentUser;
+                return `
+                    <div class="channel-card" onclick="selectChannel('${cid}')">
+                        <div class="channel-name">
+                            <i class="fas fa-hashtag"></i> ${ch.name}
+                        </div>
+                        <div class="channel-meta">
+                            <span><i class="fas fa-user"></i> ${ch.subscribers.length}</span>
+                            <span><i class="fas fa-comment"></i> ${ch.posts.length}</span>
+                        </div>
+                        <div class="channel-owner">
+                            <i class="fas fa-crown" style="color:var(--accent);"></i> ${t('owner')}: ${getDisplayName(ch.owner)}
+                        </div>
+                        <button class="sub-btn ${isSub?'subscribed':''}" onclick="event.stopPropagation();toggleSubscribe('${cid}')">
+                            ${isSub ? t('subscribed') : t('subscribe')}
+                        </button>
+                        ${isOwner ? `<button style="position:absolute;bottom:16px;right:16px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;" onclick="event.stopPropagation();deleteChannel('${cid}')"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectChannel(cid) {
+            selectedChannel = cid;
+            navigate('channel-detail');
+            renderChannelDetail(cid);
+        }
+
+        function renderChannelDetail(cid) {
+            const ch = DB.channels[cid];
+            if (!ch) {
+                document.getElementById('channel-detail-content').innerHTML = '<div class="empty-state"><h3>Channel not found</h3></div>';
+                return;
+            }
+            const container = document.getElementById('channel-detail-content');
+            const isSub = currentUser && ch.subscribers.includes(currentUser);
+            const isOwner = currentUser && ch.owner === currentUser;
+
+            let postsHtml = '';
+            if (ch.posts.length === 0) {
+                postsHtml = `<div class="empty-state" style="padding:20px;"><p>${t('no_posts')}</p></div>`;
+            } else {
+                postsHtml = ch.posts.slice().reverse().map(post => {
+                    const liked = currentUser && post.likes.includes(currentUser);
+                    const commentsHtml = post.comments.map(c => `
+                        <div class="comment">
+                            <div class="c-avatar">${getAvatarHtml(c.author, 28)}</div>
+                            <div class="c-body">
+                                <div class="c-author">${getDisplayName(c.author)} <span style="font-weight:400;color:var(--text-muted);font-size:11px;">${timeAgo(c.createdAt)}</span></div>
+                                <div class="c-text">${c.content}</div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="post">
+                            <div class="post-header">
+                                <div class="post-avatar">${getAvatarHtml(post.author, 36)}</div>
+                                <span class="post-author">${getDisplayName(post.author)}</span>
+                                <span class="post-time">${timeAgo(post.createdAt)}</span>
+                            </div>
+                            <div class="post-content">${post.content}</div>
+                            <div class="post-actions">
+                                <button class="${liked?'liked':''}" onclick="toggleLike('${cid}','${post.id}')">
+                                    <i class="fas fa-heart"></i> ${post.likes.length} ${t('likes')}
+                                </button>
+                                <button onclick="document.getElementById('comment-input-${post.id}').focus()">
+                                    <i class="fas fa-comment"></i> ${post.comments.length} ${t('comments')}
+                                </button>
+                            </div>
+                            <div class="post-comments">
+                                ${commentsHtml}
+                                <div class="comment-input">
+                                    <input type="text" id="comment-input-${post.id}" placeholder="${t('type_comment')}" />
+                                    <button onclick="addComment('${cid}','${post.id}')">${t('send')}</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            container.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+                    <div>
+                        <h2 style="font-size:22px;font-weight:700;"><i class="fas fa-hashtag" style="color:var(--accent);"></i> ${ch.name}</h2>
+                        <p style="color:var(--text-muted);font-size:14px;">
+                            <i class="fas fa-user"></i> ${ch.subscribers.length} ${t('subscribers')} · 
+                            <i class="fas fa-crown" style="color:var(--accent);"></i> ${getDisplayName(ch.owner)}
+                            ${isSub ? '<span style="background:var(--accent-light);color:var(--accent);padding:2px 12px;border-radius:12px;font-size:12px;margin-left:8px;">✓ ' + t('subscribed') + '</span>' : ''}
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        ${!isSub ? `<button class="btn-primary" style="padding:6px 18px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);" onclick="toggleSubscribe('${cid}')">${t('subscribe')}</button>` : ''}
+                        ${isOwner ? `<button style="padding:6px 18px;border-radius:var(--radius-sm);border:1px solid var(--input-border);background:var(--input-bg);color:var(--text-secondary);cursor:pointer;font-family:var(--font);" onclick="deleteChannel('${cid}')"><i class="fas fa-trash"></i></button>` : ''}
+                        <button class="btn-secondary" style="padding:6px 18px;border-radius:var(--radius-sm);border:1px solid var(--input-border);background:var(--input-bg);color:var(--text-secondary);cursor:pointer;font-family:var(--font);" onclick="navigate('channels')"><i class="fas fa-arrow-left"></i> Back</button>
+                    </div>
+                </div>
+                ${isSub || isOwner ? `
+                    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;">
+                        <input type="text" id="post-input" placeholder="Write a post..." style="flex:1;padding:10px 16px;border-radius:var(--radius-sm);border:1px solid var(--input-border);background:var(--input-bg);color:var(--text-primary);font-family:var(--font);font-size:14px;outline:none;" />
+                        <button style="padding:10px 24px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);" onclick="createPost('${cid}')">${t('post')}</button>
+                    </div>
+                ` : `
+                    <div style="margin-bottom:16px;padding:12px 16px;border-radius:var(--radius-sm);background:var(--accent-light);color:var(--text-secondary);font-size:14px;text-align:center;">
+                        <i class="fas fa-lock"></i> ${t('subscribe')} to post in this channel.
+                    </div>
+                `}
+                <div id="posts-container">
+                    ${postsHtml}
+                </div>
+            `;
+            // Update view title
+            document.getElementById('view-title').textContent = '#' + ch.name;
+            document.getElementById('view-subtitle').textContent = `${ch.subscribers.length} ${t('subscribers')} · ${ch.posts.length} ${t('posts')}`;
+            // search box placeholder
+            document.getElementById('search-input').placeholder = t('search');
+        }
+
+        function renderDmList() {
+            const container = document.getElementById('dm-list');
+            const users = getDmUsers();
+            if (users.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-envelope"></i><h3>${t('no_dms')}</h3></div>`;
+                return;
+            }
+            container.innerHTML = users.map(u => {
+                const msgs = getDmMessages(currentUser, u);
+                const last = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+                const displayName = getDisplayName(u);
+                return `
+                    <div class="dm-item" onclick="openDmChat('${u}')">
+                        <div class="dm-avatar">${getAvatarHtml(u, 40)}</div>
+                        <span class="dm-name">${displayName}</span>
+                        <span class="dm-last">${last ? timeAgo(last.timestamp) : ''}</span>
+                    </div>
+                `;
+            }).join('');
+            // If selected dm user, show chat
+            if (selectedDmUser) {
+                renderDmChat(selectedDmUser);
+            } else {
+                document.getElementById('dm-chat-container').style.display = 'none';
+            }
+        }
+
+        function renderDmChat(username) {
+            const container = document.getElementById('dm-chat-container');
+            container.style.display = 'block';
+            const chatUser = document.getElementById('dm-chat-user');
+            chatUser.textContent = getDisplayName(username);
+
+            const msgs = getDmMessages(currentUser, username);
+            const messagesContainer = document.getElementById('dm-messages');
+            if (msgs.length === 0) {
+                messagesContainer.innerHTML =
+                    `<div class="empty-state" style="padding:20px;"><p>${t('no_dms')}</p></div>`;
+            } else {
+                messagesContainer.innerHTML = msgs.map(m => `
+                    <div class="msg ${m.from === currentUser ? 'self' : ''}">
+                        ${m.content}
+                        <span class="msg-time">${formatTime(m.timestamp)}</span>
+                    </div>
+                `).join('');
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Setup send button
+            const input = document.getElementById('dm-input-field');
+            const sendBtn = document.getElementById('dm-send-btn');
+            input.placeholder = t('type_message');
+            sendBtn.textContent = t('send');
+            sendBtn.onclick = () => {
+                const content = input.value.trim();
+                if (content) {
+                    sendDm(currentUser, username, content);
+                    input.value = '';
+                }
+            };
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') sendBtn.click();
+            };
+            // Update view title
+            document.getElementById('view-title').textContent = '@' + getDisplayName(username);
+            document.getElementById('view-subtitle').textContent = t('online');
+        }
+
+        function renderProfile() {
+            const container = document.getElementById('profile-content');
+            if (!currentUser) {
+                container.innerHTML = `
+                    <div class="glass-card" style="text-align:center;padding:40px;">
+                        <i class="fas fa-user" style="font-size:48px;color:var(--text-muted);opacity:0.3;display:block;margin-bottom:16px;"></i>
+                        <h3>${t('login')} to view profile</h3>
+                        <p style="color:var(--text-muted);margin-top:8px;">${t('register')} or ${t('login')} to access your profile.</p>
+                        <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;">
+                            <button class="btn-primary" style="padding:8px 24px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);" onclick="openModal('login')">${t('login')}</button>
+                            <button class="btn-secondary" style="padding:8px 24px;border-radius:var(--radius-sm);border:1px solid var(--input-border);background:var(--input-bg);color:var(--text-secondary);font-weight:600;cursor:pointer;font-family:var(--font);" onclick="openModal('register')">${t('register')}</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const display = getDisplayName(currentUser);
+            const isGuest = isGuestUser(currentUser);
+            const userData = DB.users[currentUser];
+            const avatarData = userData?.avatar || null;
+
+            let avatarHtml = '';
+            if (avatarData) {
+                if (avatarData.startsWith('data:image') || avatarData.startsWith('http')) {
+                    avatarHtml = `<img src="${avatarData}" alt="${display}" />`;
+                } else {
+                    avatarHtml = `<span style="font-size:40px;">${avatarData}</span>`;
+                }
+            } else {
+                avatarHtml = `<span style="font-size:36px;font-weight:700;">${display.charAt(0).toUpperCase()}</span>`;
+            }
+
+            container.innerHTML = `
+                <div class="glass-card">
+                    <div class="profile-header">
+                        <div class="big-avatar" onclick="${isGuest ? '' : 'openAvatarModal()'}">
+                            ${avatarHtml}
+                            ${!isGuest ? '<div class="overlay"><i class="fas fa-camera"></i></div>' : ''}
+                        </div>
+                        <div class="profile-info">
+                            <h2>${display} ${isGuest ? '<span style="font-size:14px;font-weight:400;color:var(--text-muted);">(Guest)</span>' : ''}</h2>
+                            <p>${isGuest ? 'Guest account · ' : ''}Joined ${userData ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        ${!isGuest ? `
+                            <button onclick="openAvatarModal()"><i class="fas fa-image"></i> ${t('change_avatar')}</button>
+                            <button onclick="openModal('change-username')"><i class="fas fa-pen"></i> ${t('change_username')}</button>
+                        ` : `
+                            <button onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> ${t('logout')}</button>
+                            <button onclick="openModal('register')"><i class="fas fa-user-plus"></i> ${t('register')}</button>
+                        `}
+                        ${!isGuest ? `<button onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> ${t('logout')}</button>` : ''}
+                    </div>
+                    ${!isGuest ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--glass-border);font-size:13px;color:var(--text-muted);">
+                        <i class="fas fa-shield-alt"></i> Registered account · Password protected
+                    </div>` : ''}
+                </div>
+                <div class="glass-card" style="margin-top:16px;">
+                    <h4 style="font-weight:600;margin-bottom:8px;"><i class="fas fa-hashtag" style="color:var(--accent);"></i> Your Channels</h4>
+                    ${Object.entries(DB.channels).filter(([cid,ch]) => ch.subscribers.includes(currentUser)).length === 0 ? 
+                        '<p style="color:var(--text-muted);font-size:14px;">You are not subscribed to any channels.</p>' :
+                        Object.entries(DB.channels).filter(([cid,ch]) => ch.subscribers.includes(currentUser)).map(([cid,ch]) => 
+                            `<span style="display:inline-block;padding:4px 14px;background:var(--accent-light);border-radius:20px;margin:4px;font-size:13px;cursor:pointer;" onclick="selectChannel('${cid}')">#${ch.name}</span>`
+                        ).join('')
+                    }
+                </div>
+            `;
+            // update view title
+            document.getElementById('view-title').textContent = t('profile');
+            document.getElementById('view-subtitle').textContent = display;
+        }
+
+        function renderSettings() {
+            const container = document.getElementById('settings-content');
+            const theme = DB.settings.theme || 'light';
+            const lang = DB.settings.language || 'en';
+            const bg = DB.settings.background || '#e8edf5';
+
+            container.innerHTML = `
+                <div class="glass-card">
+                    <h3 style="font-weight:600;margin-bottom:16px;"><i class="fas fa-sliders-h" style="color:var(--accent);"></i> ${t('settings')}</h3>
+
+                    <div class="setting-row">
+                        <span class="label"><i class="fas fa-moon"></i> ${t('theme')}</span>
+                        <div class="control">
+                            <button class="theme-toggle ${theme === 'dark' ? 'dark' : ''}" onclick="toggleTheme()">
+                                <span class="thumb"></span>
+                            </button>
+                            <span style="font-size:13px;color:var(--text-muted);">${theme === 'dark' ? t('dark') : t('light')}</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <span class="label"><i class="fas fa-language"></i> ${t('language')}</span>
+                        <div class="control">
+                            <select onchange="changeLanguage(this.value)">
+                                ${Object.entries(LANGUAGES).map(([code, langData]) => 
+                                    `<option value="${code}" ${code === lang ? 'selected' : ''}>${langData.name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <span class="label"><i class="fas fa-palette"></i> ${t('background')}</span>
+                        <div class="control">
+                            <div class="bg-presets">
+                                ${['#e8edf5','#d4e0f0','#c8d8e8','#f0e8e0','#e8f0e0','#f0e8f0','#1a1a2e','#0f0f1a','#2a1a3a','#1a2a3a'].map(c => `
+                                    <div class="bg-option ${bg === c ? 'active' : ''}" style="background:${c};" onclick="setBackground('${c}')" title="${c}"></div>
+                                `).join('')}
+                            </div>
+                            <input type="color" value="${bg}" onchange="setBackground(this.value)" style="width:44px;height:44px;border-radius:50%;padding:2px;cursor:pointer;" />
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);font-size:13px;color:var(--text-muted);">
+                        <i class="fas fa-info-circle"></i> Nexus v1.0 · Data stored locally.
+                    </div>
+                </div>
+            `;
+            // update view title
+            document.getElementById('view-title').textContent = t('settings');
+            document.getElementById('view-subtitle').textContent = '';
+        }
+
+        // ============================================================
+        // THEME, LANGUAGE, BACKGROUND
+        // ============================================================
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            DB.settings.theme = theme;
+            saveDB();
+        }
+
+        function toggleTheme() {
+            const current = DB.settings.theme || 'light';
+            const next = current === 'light' ? 'dark' : 'light';
+            applyTheme(next);
+            renderSettings();
+        }
+
+        function changeLanguage(code) {
+            currentLanguage = code;
+            DB.settings.language = code;
+            saveDB();
+            // Update all UI text
+            updateAllUIStrings();
+            renderSettings();
+            toast(t('settings_saved'), 'success');
+        }
+
+        function setBackground(color) {
+            DB.settings.background = color;
+            applyBackground(color);
+            saveDB();
+            renderSettings();
+        }
+
+        function applyBackground(color) {
+            document.getElementById('main').style.background = color;
+            // Also set body bg
+            document.body.style.background = color;
+        }
+
+        function updateAllUIStrings() {
+            // Update static elements that use t()
+            document.getElementById('view-title').textContent = t(currentView === 'home' ? 'home' :
+                currentView === 'channels' ? 'channels' :
+                currentView === 'dms' ? 'dms' :
+                currentView === 'profile' ? 'profile' :
+                currentView === 'settings' ? 'settings' : 'home');
+            document.getElementById('search-input').placeholder = t('search');
+            // Sidebar tooltips
+            document.querySelector('[data-view="home"]').title = t('home');
+            document.querySelector('[data-view="channels"]').title = t('channels');
+            document.querySelector('[data-view="dms"]').title = t('dms');
+            document.querySelector('[data-view="profile"]').title = t('profile');
+            document.querySelector('[data-view="settings"]').title = t('settings');
+            // Update modals
+            // ... dynamic content will be re-rendered via view updates
+            updateAllViews();
+        }
+
+        // ============================================================
+        // NAVIGATION
+        // ============================================================
+
+        function navigate(view) {
+            currentView = view;
+            // Hide all views
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            // Show target
+            const targetMap = {
+                'home': 'view-home',
+                'channels': 'view-channels',
+                'channel-detail': 'view-channel-detail',
+                'dms': 'view-dms',
+                'profile': 'view-profile',
+                'settings': 'view-settings'
+            };
+            const targetId = targetMap[view] || 'view-home';
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.classList.add('active');
+
+            // Update sidebar buttons
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            const btnMap = {
+                'home': '[data-view="home"]',
+                'channels': '[data-view="channels"]',
+                'channel-detail': '[data-view="channels"]',
+                'dms': '[data-view="dms"]',
+                'profile': '[data-view="profile"]',
+                'settings': '[data-view="settings"]'
+            };
+            const sel = btnMap[view] || '[data-view="home"]';
+            const btn = document.querySelector(sel);
+            if (btn) btn.classList.add('active');
+
+            // Update header title
+            const titles = {
+                'home': t('home'),
+                'channels': t('channels'),
+                'channel-detail': 'Channel',
+                'dms': t('dms'),
+                'profile': t('profile'),
+                'settings': t('settings')
+            };
+            document.getElementById('view-title').textContent = titles[view] || t('home');
+
+            // Show/hide search & add button
+            const searchBox = document.getElementById('header-search');
+            const addBtn = document.getElementById('header-add');
+            if (view === 'channels') {
+                searchBox.style.display = 'flex';
+                addBtn.style.display = 'flex';
+                addBtn.onclick = () => openModal('create-channel');
+                document.getElementById('search-input').placeholder = t('search') + ' ' + t('channels').toLowerCase();
+                document.getElementById('search-input').oninput = (e) => {
+                    const q = e.target.value.toLowerCase();
+                    document.querySelectorAll('.channel-card').forEach(card => {
+                        const name = card.querySelector('.channel-name')?.textContent?.toLowerCase() || '';
+                        card.style.display = name.includes(q) ? '' : 'none';
+                    });
+                };
+            } else if (view === 'dms') {
+                searchBox.style.display = 'flex';
+                addBtn.style.display = 'flex';
+                addBtn.onclick = () => openModal('new-dm');
+                document.getElementById('search-input').placeholder = t('search') + ' ' + t('dms').toLowerCase();
+                document.getElementById('search-input').oninput = (e) => {
+                    const q = e.target.value.toLowerCase();
+                    document.querySelectorAll('.dm-item').forEach(item => {
+                        const name = item.querySelector('.dm-name')?.textContent?.toLowerCase() || '';
+                        item.style.display = name.includes(q) ? '' : 'none';
+                    });
+                };
+            } else if (view === 'channel-detail') {
+                searchBox.style.display = 'none';
+                addBtn.style.display = 'none';
+            } else {
+                searchBox.style.display = 'none';
+                addBtn.style.display = 'none';
+            }
+
+            // Update subtitle
+            const subtitles = {
+                'home': '',
+                'channels': '',
+                'channel-detail': '',
+                'dms': '',
+                'profile': '',
+                'settings': ''
+            };
+            document.getElementById('view-subtitle').textContent = subtitles[view] || '';
+        }
+
+        // ============================================================
+        // MODALS
+        // ============================================================
+
+        function openModal(id) {
+            document.getElementById('modal-' + id).classList.add('open');
+        }
+
+        function closeModal(id) {
+            document.getElementById('modal-' + id).classList.remove('open');
+        }
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('open');
+                }
+            });
+        });
+
+        // ============================================================
+        // SIDEBAR NAVIGATION
+        // ============================================================
+
+        document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                if (view === 'profile' && !currentUser) {
+                    toast('Please login or register first.', 'error');
+                    return;
+                }
+                if (view === 'settings' && !currentUser) {
+                    toast('Please login or register first.', 'error');
+                    return;
+                }
+                if (view === 'dms' && !currentUser) {
+                    toast('Please login or register first.', 'error');
+                    return;
+                }
+                if (view === 'channels') {
+                    selectedChannel = null;
+                }
+                navigate(view);
+                if (view === 'channels') renderChannelList();
+                if (view === 'dms') renderDmList();
+                if (view === 'profile') renderProfile();
+                if (view === 'settings') renderSettings();
+                if (view === 'home') renderHomeStats();
+            });
+        });
+
+        // Sidebar avatar click -> profile or login
+        document.getElementById('sidebar-avatar').addEventListener('click', () => {
+            if (currentUser) {
+                navigate('profile');
+                renderProfile();
+            } else {
+                openModal('login');
+            }
+        });
+        document.getElementById('sidebar-username').addEventListener('click', () => {
+            if (currentUser) {
+                navigate('profile');
+                renderProfile();
+            } else {
+                openModal('login');
+            }
+        });
+
+        // ============================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+            }
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('search-input').focus();
+            }
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        function init() {
+            loadDB();
+            // Check session
+            const session = getSession();
+            if (session && DB.users[session]) {
+                currentUser = session;
+                updateSidebar();
+                updateAllViews();
+                navigate('home');
+            } else {
+                if (session) localStorage.removeItem('nexus_session');
+                currentUser = null;
+                updateSidebar();
+                updateAllViews();
+                navigate('home');
+            }
+            // Render emoji picker initial
+            const emojis = ['😊', '😎', '🤩', '👨‍💻', '👩‍💻', '🧑‍💻', '🐱', '🐶', '🦊', '🐼', '🚀', '⭐', '🌈', '🔥', '💎', '🎮', '📚', '🎵', '🏀', '⚽',
+                '🍕', '🍔', '🌮', '🍣', '🎂', '☕', '🍻', '🎉', '🏆', '💯'
+            ];
+            document.getElementById('emoji-picker').innerHTML = emojis.map(e =>
+                `<button style="font-size:28px; width:44px; height:44px; border-radius:50%; border:2px solid var(--input-border); background:var(--input-bg); cursor:pointer; transition:all 0.2s;" onclick="selectEmoji('${e}')">${e}</button>`
+            ).join('');
+
+            // Apply background
+            applyBackground(DB.settings.background || '#e8edf5');
+
+            console.log('✨ Nexus Messenger initialized.');
+            console.log(`👥 ${Object.keys(DB.users).length} users, ${Object.keys(DB.channels).length} channels`);
+        }
+
+        // Make functions globally accessible for inline onclick
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.handleGuest = handleGuest;
+        window.handleLogout = handleLogout;
+        window.handleCreateChannel = handleCreateChannel;
+        window.handleNewDm = handleNewDm;
+        window.handleChangeUsername = handleChangeUsername;
+        window.handleAvatarEmoji = handleAvatarEmoji;
+        window.selectEmoji = selectEmoji;
+        window.openAvatarModal = openAvatarModal;
+        window.toggleSubscribe = toggleSubscribe;
+        window.deleteChannel = deleteChannel;
+        window.selectChannel = selectChannel;
+        window.createPost = createPost;
+        window.toggleLike = toggleLike;
+        window.addComment = addComment;
+        window.openDmChat = openDmChat;
+        window.closeDmChat = closeDmChat;
+        window.sendDm = sendDm;
+        window.toggleTheme = toggleTheme;
+        window.changeLanguage = changeLanguage;
+        window.setBackground = setBackground;
+        window.navigate = navigate;
+        window.renderChannelDetail = renderChannelDetail;
+        window.renderDmList = renderDmList;
+        window.renderDmChat = renderDmChat;
+        window.renderProfile = renderProfile;
+        window.renderSettings = renderSettings;
+        window.updateAllViews = updateAllViews;
+        window.toast = toast;
+        window.t = t;
+
+        // Run
+        init();
+    </script>
+</body>
+</html>
